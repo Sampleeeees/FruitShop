@@ -1,0 +1,28 @@
+{% load static %}
+<nav class="navbar bg-warning">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#" >
+        <span class="fw-medium" style="font-size: 30px; margin-left: 30%;">
+            MyFruitShop
+        </span>
+    </a>
+        {% if msg_error %}
+            <div>
+                <p class="text-danger mt-2">{{ msg_error }}</p>
+            </div>
+        {% endif %}
+      {% if user.is_authenticated %}
+        <div>
+            {{ user.username }}
+            <a class="btn btn-sm btn-outline-danger me-2" href="{% url 'logout' %}">Logout</a>
+        </div>
+      {% else %}
+          <form class="d-flex" style="margin-right: 3%" role="search" autocomplete="off" method="POST" action="{% url 'login' %}">
+          {% csrf_token %}
+          <input class="form-control me-2" id="id_username" name="username" type="search" placeholder="Username" aria-label="Search">
+          <input class="form-control me-2" id="id_password" name="password" type="password" placeholder="Password" aria-label="Search">
+          <button class="btn btn-sm btn-outline-success btn-header" type="submit">Login</button>
+        </form>
+      {% endif %}
+  </div>
+</nav>

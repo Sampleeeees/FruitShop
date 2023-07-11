@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fruit Shop</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.2.js" integrity="sha256-pkn2CUZmheSeyssYw3vMp1+xyub4m+e+QK4sQskvuo4=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="">
+    <link rel="stylesheet" href="{% static 'js/toastr/toastr.css' %}">
+</head>
+<body style="font-size: 14px">
+{% include 'fruits/navbar.html' %}
+<div class="container-fluid">
+    <div class="box">
+        <div class="row" style="padding-top: 40px; margin: 0 5% 0 5%;">
+            <!-- LEFT SIDE -->
+            <div class="col-sm-12 col-md-12 col-lg-8">
+            <!-- TABLE-->
+                <div class="row">
+                    <table class="table table-bordered table-responsive border-1 border-dark" style="text-align: center">
+                        <thead>
+                            <tr>
+                                <th colspan="4">
+                                Товари на складі
+                                </th>
+                            </tr>
+                        </thead>
+                        <thead class="table-secondary border-1 border-dark">
+                            <tr>
+                                <th class="fw-normal" style="min-width: 100px;">Назва</th>
+                                <th class="fw-normal">Поточна кількість</th>
+                                <th class="fw-normal" style="width: 420px">Дії</th>
+                                <th class="fw-normal">Останні операції</th>
+                            </tr>
+                        </thead>
+                            {% for fruit in fruits %}
+                            <tr>
+                                <td>
+                                   {{ fruit.name }}
+                                </td>
+                                <td>
+                                    <span id="product_total_count_{{ fruit.id }}">{{ fruit.total_count }}</span>
+
+                                </td>
+                                <td style="display: flex;">
+                                    <input type="text" style="width: 150px; margin-left: 5%; margin-right: 10%;" id="{{ fruit.id }}" name="{{ fruit.id }}" placeholder="К-сть" class="form-control">
+                                    <button class="btn btn-sm btn-outline-success btn-buy-fruit me-2" type="button">Купити</button>
+                                    <button class="btn btn-sm btn-outline-warning btn-sell-fruit me-2" type="button">Продати</button>
+                                </td>
+                                <td>
+                                    <span id="last_operation_{{ fruit.id }}">
+                                    {{ fruit.date_operation|date:"d.m.Y H:i" }} -
+                                        {% if fruit.type_operation == 'Купити'  %}
+                                        куплено {{ fruit.count }} {{ fruit.name.lower }} за {{ fruit.summ }} USD
+                                        {% elif fruit.type_operation == 'Продати'%}
+                                        продано {{ fruit.count }} {{ fruit.name.lower }} за {{ fruit.summ }} USD
+                                        {% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                    </table>
+                </div>
+            <!-- END TABLE -->
+                <div class="box">
+                    <div class="row">
+                            <div class="col-6">
+                                    <div>
+                                        <div class="box" id=fruit_chat" style="height: 200px; overflow: auto; padding: 10px; background-color: #FFFFFF; border: #000000 solid 1px">
+                                            {% for message in messages %}
+                                                <p class="m-1">
+                                                {{ message.date_send|time:"H:i" }} {{ message.user_id }}: {{ message.message }}
+                                                </p>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="form-group" style="display: flex; margin-top: 20px">
+                                            <input type="text" class="form-control" placeholder="Повідомлення..." id="input_message">
+                                             <button class="btn btn-outline-success btn-header" id="button_send_message" style="margin: 0 10px; padding: 0 10px" type="button" onclick="event.preventDefault()">Відправити</button>
+                                        </div>
+                                    </div>
+                            </div>
+                        <div class="col-6" style="border: 2px solid black; border-radius: 5px; text-align: center">
+                            <div class="box" style="padding: 10px">
+                                <p class="fw-bold">Банк</p>
+                                <div class="row" style="border: 1px solid black; text-align: center">
+                                    <div class="col-6" style="border-right: 1px solid black">Банківський рахунок:</div>
+                                    <div class="col-6"><span class="money-balance" id="bank-balance">{{ account.balance }}</span> <span class="money-balance"> USD</span></div>
+                                </div>
+                                <div class="row" style="margin-top: 10px; align-items: center ">
+                                    <div class="col-5">
+                                     <button class="btn btn-outline-primary btn-header" style="padding: 5px; font-size: 15px" id="start_audit" onclick=""
+                                             type="button">Провести <br> бугалтерський аудит</button>
+                                    </div>
+                                    <div class="col-7">
+                                        <div class="progress" style="padding:0">
+                                          <div id="audit-progress-bar" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{% if progress_audit %}{{ progress_audit }}{% else %}0{% endif %}"
+                                          aria-valuemin="0" aria-valuemax="100" style="width: {% if progress_audit %}{{ progress_audit }}%{% else %}0%{% endif %}; background-color: #f6acca; border-radius: 10px">
+                                            <span id="audit-bar" style="font-weight: bold">{% if progress_audit %}{{ progress_audit }} % {% endif %}</span>
+                                          </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row" style="display: flex; justify-content: space-between; margin-top: 15px">
+                                    <input type="text" style="width: 120px;" id="balance_input" placeholder="К-сть" class="form-control">
+                                    <button class="btn btn-sm btn-outline-success btn-up-money" style="width: 100px" id="up_money" name="up" onclick='MoneyOnBank(this.name)' type="button">Поповнити</button>
+                                    <button class="btn btn-sm btn-outline-warning btn-down-money" style="width: 100px" id="down_money" name="down" onclick='MoneyOnBank(this.name)' type="button">Вивести</button>
+                                </div>
+                                <div class="row" style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center">
+                                    <label for="declaration-input" id="declaration_label" class="btn btn-success" style="" title="Файл не обраний">Загрузить декларацию</label>
+                                    <input id="declaration-input" type="" value="Завантажити декларацію" hidden>
+                                    <span class="mt-2" style="width: max-content">Сьогодні завантажено: <span id="count-declarations">{{ declaration_count }}</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- RIGHT SIDE -->
+            <div class="col-sm-12 col-md-12 col-lg-4">
+                <div id="logger_chat" style="padding: 15px; background-color: #fff3f1; overflow: auto; height: 650px">
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    //**// CHAT //**//
+    // Підключення до WebSocket
+    const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/');
+
+    // Отримання div чату
+    let fruit_chat = document.getElementById('fruit_chat"');
+    // Отримання input для повідомлення
+    let fruit_message_input = document.getElementById('input_message');
+    // Отримання кнопку для відправлення повідомлення
+    let fruit_message_send = document.getElementById('button_send_message');
+
+    // Відправити повідомлення якщо користувача натиснув Enter
+    fruit_message_input.onkeyup = function (e) {
+        if (e.keyCode === 13) {
+            fruit_message_send.click()
+        }
+    }
+
+    //Очистити поле input після відправки повідомлення
+    fruit_message_send.onclick = function () {
+        if (fruit_message_input.value.length === 0) return;
+        chatSocket.send(JSON.stringify({
+            'message': fruit_message_input.value,
+        }))
+        fruit_message_input.value = "";
+    }
+
+
+    //* Connect to Websocket *//
+    chatSocket.onclose = function (e) {
+        console.log('Успішно підключено до Websocket')
+    }
+
+    //* Websocket close *//
+    chatSocket.onclose = function (e) {
+        console.log("Websocket підключення було зруйновано. Перепідключення ...")
+        setTimeout(function () {
+            console.log("Перепідключення...");
+
+        }, 2000)
+    }
+
+    //* Обробка повідомлення отримане Websocket *//
+    chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        console.log(data);
+        let msg_p = document.createElement('p');
+        msg_p.classList.add('m-1');
+        msg_p.innerText = data.time + ' ' + data.user + ' ' + data.message;
+        fruit_chat.append(msg_p);
+
+        // Скрол чату вниз
+        fruit_chat.scrollTop = fruit_chat.scrollHeight
+    };
+
+    //* Помилка Websocket *//
+    chatSocket.onerror = function (err) {
+        console.log("Websocket error:" + err.message);
+        console.log("Закриття сокету");
+        chatSocket.close()
+    }
+</script>
+<script>
+    //**// FruitSocket //**//
+    //*Підключення вебсокету для маркету*//
+    const FruitSocket = new WebSocket('ws://' + window.location.host + '/ws/shop/');
+    console.log(FruitSocket)
+    //* Відправка купівлі продукту *//
+    $('.btn-buy-fruit').click(function (e){
+        let fruit = $(this).prev('input')[0];
+        console.log(fruit.id, fruit.value)
+        FruitSocket.send(JSON.stringify({
+            action: 'buy',
+            "fruit_id": fruit.id,
+            "count": fruit.value,
+        }))
+        fruit.value = '';
+    })
+
+    //* Відправка продажу товару на вебсокет*//
+
+    $('.btn-sell-fruit').click(function (e){
+        let fruit = $(this)[0].parentElement.getElementsByTagName("input")[0]
+        console.log(fruit)
+        FruitSocket.send(JSON.stringify({
+            action: 'sell',
+            'fruit_id': fruit.id,
+            'count': fruit.value
+        }))
+        fruit.value = '';
+    });
+    // Отримання повідомлення-відповіді від Websocket//
+    FruitSocket.onmessage = function (e){
+        let fruit_data = JSON.parse(e.data);
+        $('#product_total_count_'+ fruit_data['fruit_id'])[0].innerText = `${fruit_data['total_count']}`;
+        //let fruit_total_count = $('#product_total_count_'+)
+        $('#last_operation_' + fruit_data['fruit_id'])[0]. innerText = `${fruit_data['last_operation']}`
+    };
+
+</script>
+</html>
