@@ -7,7 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.6.2.js" integrity="sha256-pkn2CUZmheSeyssYw3vMp1+xyub4m+e+QK4sQskvuo4=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="">
-    <link rel="stylesheet" href="{% static 'js/toastr/toastr.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.css" integrity="sha512-3pIirOrwegjM6erE5gPSwkUzO+3cTjpnV9lexlNZqvupR64iZBnOOTiiLPb9M36zpMScbmUNIcHUqKD47M719g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" integrity="sha512-vKMx8UnXk60zUwyUnUPM3HbQo8QfmNx7+ltw8Pm5zLusl1XIfwcxo8DbWCqMGKaWeNxWA8yrx5v3SaVpMvR3CA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body style="font-size: 14px">
 {% include 'fruits/navbar.html' %}
@@ -85,7 +86,7 @@
                                 <p class="fw-bold">Банк</p>
                                 <div class="row" style="border: 1px solid black; text-align: center">
                                     <div class="col-6" style="border-right: 1px solid black">Банківський рахунок:</div>
-                                    <div class="col-6"><span class="money-balance" id="bank-balance">{{ account.balance }}</span> <span class="money-balance"> USD</span></div>
+                                    <div class="col-6"><span class="money-balance" id="bank-balance">{{ balance.balance }}</span> <span class="money-balance"> USD</span></div>
                                 </div>
                                 <div class="row" style="margin-top: 10px; align-items: center ">
                                     <div class="col-5">
@@ -93,21 +94,18 @@
                                              type="button">Провести <br> бугалтерський аудит</button>
                                     </div>
                                     <div class="col-7">
-                                        <div class="progress" style="padding:0">
-                                          <div id="audit-progress-bar" class="progress-bar progress-bar-success" role="progressbar" aria-valuenow="{% if progress_audit %}{{ progress_audit }}{% else %}0{% endif %}"
-                                          aria-valuemin="0" aria-valuemax="100" style="width: {% if progress_audit %}{{ progress_audit }}%{% else %}0%{% endif %}; background-color: #f6acca; border-radius: 10px">
-                                            <span id="audit-bar" style="font-weight: bold">{% if progress_audit %}{{ progress_audit }} % {% endif %}</span>
-                                          </div>
+                                        <div class="progress" role="progressbar" style="height: 20px;" aria-label="Example with label" aria-valuenow="" aria-valuemin="0" aria-valuemax="100">
+                                          <div id="progress-audit" class="progress-bar bg-info" style="width: 0%;">0 %</div>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="row" style="display: flex; justify-content: space-between; margin-top: 15px">
                                     <input type="text" style="width: 120px;" id="balance_input" placeholder="К-сть" class="form-control">
-                                    <button class="btn btn-sm btn-outline-success btn-up-money" style="width: 100px" id="up_money" name="up" onclick='MoneyOnBank(this.name)' type="button">Поповнити</button>
-                                    <button class="btn btn-sm btn-outline-warning btn-down-money" style="width: 100px" id="down_money" name="down" onclick='MoneyOnBank(this.name)' type="button">Вивести</button>
+                                    <button class="btn btn-sm btn-outline-success btn-add-money" style="width: 100px" id="add_money" name="up" type="button">Поповнити</button>
+                                    <button class="btn btn-sm btn-outline-warning btn-sell-money" style="width: 100px" id="sell_money" name="down" type="button">Вивести</button>
                                 </div>
                                 <div class="row" style="display: flex; justify-content: space-between; margin-top: 15px; align-items: center">
-                                    <label for="declaration-input" id="declaration_label" class="btn btn-success" style="" title="Файл не обраний">Загрузить декларацию</label>
+                                    <label for="declaration-input" id="declaration_label" class="btn btn-success" style="" title="Файл не вибрано">Завантажити декларацію</label>
                                     <input id="declaration-input" type="" value="Завантажити декларацію" hidden>
                                     <span class="mt-2" style="width: max-content">Сьогодні завантажено: <span id="count-declarations">{{ declaration_count }}</span></span>
                                 </div>
@@ -126,6 +124,8 @@
     </div>
 </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js" integrity="sha512-VEd+nq25CkR676O+pLBnDW09R7VQX9Mdiij052gVCp5yVH3jGtH70Ho/UUv4mJDsEdTvqRCFZg0NKGiojGnUCw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 <script>
     //**// CHAT //**//
     // Підключення до WebSocket
@@ -137,6 +137,8 @@
     let fruit_message_input = document.getElementById('input_message');
     // Отримання кнопку для відправлення повідомлення
     let fruit_message_send = document.getElementById('button_send_message');
+
+    fruit_chat.scrollTop = fruit_chat.scrollHeight
 
     // Відправити повідомлення якщо користувача натиснув Enter
     fruit_message_input.onkeyup = function (e) {
@@ -156,7 +158,7 @@
 
 
     //* Connect to Websocket *//
-    chatSocket.onclose = function (e) {
+    chatSocket.onopen = function (e) {
         console.log('Успішно підключено до Websocket')
     }
 
@@ -175,7 +177,7 @@
         console.log(data);
         let msg_p = document.createElement('p');
         msg_p.classList.add('m-1');
-        msg_p.innerText = data.time + ' ' + data.user + ' ' + data.message;
+        msg_p.innerText = data.time + ' ' + data.user + ': ' + data.message;
         fruit_chat.append(msg_p);
 
         // Скрол чату вниз
@@ -197,11 +199,11 @@
     //* Відправка купівлі продукту *//
     $('.btn-buy-fruit').click(function (e){
         let fruit = $(this).prev('input')[0];
-        console.log(fruit.id, fruit.value)
         FruitSocket.send(JSON.stringify({
             action: 'buy',
             "fruit_id": fruit.id,
             "count": fruit.value,
+            'balance': $('#bank-balance').text()
         }))
         fruit.value = '';
     })
@@ -218,13 +220,123 @@
         }))
         fruit.value = '';
     });
+
+    $('#add_money').click(function (e){
+        let balance_input = $(this)[0].parentElement.getElementsByTagName('input')[0];
+        console.log('Balance Input', balance_input);
+        FruitSocket.send(JSON.stringify({
+            action: 'add balance',
+            'account_balance': balance_input.value,
+        }))
+        balance_input.value = '';
+    })
+
+    $('#sell_money').click(function (e){
+        let balance_input = $(this)[0].parentElement.getElementsByTagName("input")[0];
+        FruitSocket.send(JSON.stringify({
+            action: 'sell balance',
+            'account_balance': balance_input.value,
+        }))
+        balance_input.value = '';
+    })
+
+    console.log($('#progress-audit')[0].parentElement)
+
+
     // Отримання повідомлення-відповіді від Websocket//
     FruitSocket.onmessage = function (e){
         let fruit_data = JSON.parse(e.data);
-        $('#product_total_count_'+ fruit_data['fruit_id'])[0].innerText = `${fruit_data['total_count']}`;
-        //let fruit_total_count = $('#product_total_count_'+)
-        $('#last_operation_' + fruit_data['fruit_id'])[0]. innerText = `${fruit_data['last_operation']}`
+        let logger_chat = $('#logger_chat');
+        msg = document.createElement("p");
+        console.log(fruit_data)
+        if(fruit_data['type'] === 'fruit_message') {
+            if (fruit_data['transaction'] === 'error balance') {
+                msg.classList.add('m-1', 'text-danger');
+                msg.innerText = `${fruit_data['date_transaction']} - ERROR: Постачальник привіз ${fruit_data['fruit_count']} ${fruit_data['fruit_name']}. Недостатньо коштів на рахунку, закупку відмінено.`
+                logger_chat.append(msg)
+            } else if (fruit_data['transaction'] === 'error fruit') {
+                msg.classList.add('m-1', 'text-danger');
+                msg.innerText = `${fruit_data['date_transaction']} - ERROR: Продаємо ${fruit_data['fruit_count']} ${fruit_data['fruit_name']}. В наявності стільки немає, продаж відмінено`
+                logger_chat.append(msg)
+            } else if (fruit_data['transaction'] === true) {
+                $('#last_operation_' + fruit_data['fruit_id'])[0].innerText = `${fruit_data['last_operation']}`;
+                msg.classList.add('m-1', 'text-success');
+                msg.innerText = `${fruit_data['date_transaction']} - SUCCESS: Постачальник привіз ${fruit_data['fruit_count']} ${fruit_data['fruit_name']}. З рахунку списано ${fruit_data['fruit_count'] * fruit_data['fruit_price']} USD, закупку завершено`
+                logger_chat.append(msg)
+            } else if (fruit_data['transaction'] === 'sell fruit') {
+                $('#last_operation_' + fruit_data['fruit_id'])[0].innerText = `${fruit_data['last_operation']}`;
+                msg.classList.add('m-1', 'text-success');
+                msg.innerText = `${fruit_data['date_transaction']} - SUCCESS: Продаємо ${fruit_data['fruit_count']} ${fruit_data['fruit_name']}. Заплатили ${fruit_data['fruit_count'] * fruit_data['fruit_price']} USD, продаж завершено`
+                logger_chat.append(msg)
+            }
+
+            $('#product_total_count_' + fruit_data['fruit_id'])[0].innerText = `${fruit_data['total_count']}`;
+            $('#bank-balance')[0].innerText = fruit_data['account_balance']
+        }else if (fruit_data['type'] === 'balance_message'){
+            $('#bank-balance')[0].innerText = fruit_data['balance']
+            if (fruit_data['success'] === true){
+                msg.classList.add('m-1', 'text-success');
+                msg.innerText = `${fruit_data['time']} - SUCCESS: Банківський рахунок було поповнено на ${fruit_data['added_balance']} USD.`
+                logger_chat.append(msg)
+            }else if(fruit_data['success'] === false){
+                msg.classList.add('m-1', 'text-warning');
+                msg.innerText = `${fruit_data['time']} - SUCCESS: З банківського рахунку було знято ${fruit_data['added_balance']} USD`
+                logger_chat.append(msg)
+            }
+        }else if (fruit_data['error']){
+            toastr.error(`${fruit_data['error']}`, 'Авторизація', {closeButton: true});
+        }
     };
 
+</script>
+<script>
+    const auditSocket = new WebSocket('ws://' + window.location.host + '/ws/audit/');
+
+
+    //* Connect to Websocket *//
+    auditSocket.onopen = function (e) {
+        console.log('Успішно підключено до Websocket')
+    }
+
+    //* Websocket close *//
+    auditSocket.onclose = function (e) {
+        console.log("Websocket підключення було зруйновано. Перепідключення ...")
+        setTimeout(function () {
+            console.log("Перепідключення...");
+
+        }, 2000)
+    }
+
+    $('#start_audit').click(function (e){
+        console.log('btn')
+        $.ajax({
+            url: '{% url "start_audit" %}',
+            type: 'GET',
+            success: function (e){
+                console.log('WORK')
+            }
+        })
+    })
+
+    auditSocket.onmessage = function (e) {
+        let audit_data = JSON.parse(e.data)
+        console.log(audit_data)
+        console.log($('#progress-audit')[0])
+        //* toastr.warning('Початок', 'Увага') *//
+        if(audit_data['progress'] === 0){
+            toastr.warning('Бугалтерський аудит розпочався', 'Увага')
+        }else if(audit_data['progress'] !== 100){
+            $('#progress-audit')[0].innerText = `${audit_data['progress'].toFixed(0)} %`
+            $('#progress-audit').css('width', `${audit_data['progress']}%`)
+        }else{
+            $('#progress-audit')[0].innerText = `${audit_data['progress'].toFixed(0)} %`
+            $('#progress-audit').css('width', `${audit_data['progress']}%`)
+            toastr.success('Аудит пройшов успішно', 'Успішно')
+            setTimeout(function() {
+            $('#progress-audit')[0].innerText = ''
+            $('#progress-audit').css('width', `0%`)
+        }, 2000);
+        }
+    }
 </script>
 </html>

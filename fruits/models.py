@@ -29,13 +29,12 @@ class Fruit(models.Model):
 
     @property
     def summ(self):
-        return self.price * self.count
+        return int(self.price) * int(self.count)
 
 class PersonalAccount(models.Model):
     """
-    Models для банківського рахунку користувача в якому зберігається його баланс
+    Models для банківського рахунку в якому зберігається баланс
     """
-    user = models.ForeignKey(User, verbose_name='Користувач', on_delete=models.CASCADE)
     balance = models.PositiveIntegerField(default=0, verbose_name='Баланс користувача')
 
 class Declaration(models.Model):
