@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth import get_user_model, login, logout
 from django.contrib.auth.hashers import check_password
 from django.http import JsonResponse
@@ -6,7 +8,7 @@ from django.contrib.auth.views import LoginView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from users.models import Message
-from .models import Fruit, PersonalAccount
+from .models import Fruit, PersonalAccount, Declaration
 from .tasks import buh_audit_task
 
 User = get_user_model()
@@ -17,7 +19,8 @@ User = get_user_model()
 def index(request):
     return render(request, 'fruits/index.html', context={'messages': Message.objects.all().order_by('pk')[:40],
                                                          'fruits': Fruit.objects.all(),
-                                                         'balance': PersonalAccount.objects.first()})
+                                                         'balance': PersonalAccount.objects.first(),
+                                                         'declarations': Declaration.objects.filter(date__gte=datetime.datetime.today()).count})
 
 
 class Login(LoginView):
@@ -41,13 +44,21 @@ class Login(LoginView):
 
 def user_logout(request):
     logout(request)
-    return render(request, 'fruits/index.html')
+    return redirect('index')
 
 
 def start_audit(request):
     if request.method == 'GET':
-        buh_audit_task()
+        buh_audit_task(request.GET.get('user_id'))
         return JsonResponse({}, status=200)
+
+def load_declaration(request):
+    if request.method == 'POST':
+        declaration = request.FILES.get('declaration')
+        Declaration.objects.create(document=declaration, date=datetime.datetime.now(),
+                                   personal_account=PersonalAccount.objects.first())
+        declarations = Declaration.objects.filter(date__gte=datetime.datetime.today()).count()
+        return JsonResponse({"success": declarations}, status = 200)
 
 
 

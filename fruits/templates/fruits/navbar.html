@@ -6,11 +6,6 @@
             MyFruitShop
         </span>
     </a>
-        {% if msg_error %}
-            <div>
-                <p class="text-danger mt-2">{{ msg_error }}</p>
-            </div>
-        {% endif %}
       {% if user.is_authenticated %}
         <div>
             {{ user.username }}

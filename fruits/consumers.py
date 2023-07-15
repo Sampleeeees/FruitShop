@@ -224,14 +224,14 @@ class FruitConsumer(AsyncWebsocketConsumer):
 
 class BuhAuditConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.room_name = 'audit'
-        self.room_group_name = 'audit_%s' % self.room_name
-
-        print('Buh', self.room_group_name)
-
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
-
-        await self.accept()
+        user = self.scope['user']
+        if user.is_anonymous:
+            await self.close()
+        else:
+            self.room_name = f'audit_{user.pk}'
+            self.room_group_name = f'audit_%s' % self.room_name
+            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.accept()
 
     async def disconnect(self, code):
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)

@@ -10,3 +10,4 @@ class FruitAdmin(admin.ModelAdmin):
 @admin.register(PersonalAccount)
 class PersonalAccountAdmin(admin.ModelAdmin):
     list_display = ('balance',)
+
